@@ -1,0 +1,33 @@
+name: Build Linux amd64
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - fix-xiaomi-cs2-buffer
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Build go2rtc_linux_amd64
+        env:
+          GOOS: linux
+          GOARCH: amd64
+          CGO_ENABLED: 0
+        run: go build -ldflags "-s -w" -trimpath -o go2rtc_linux_amd64 .
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: go2rtc_linux_amd64
+          path: go2rtc_linux_amd64
+          if-no-files-found: error
