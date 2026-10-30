@@ -72,7 +72,9 @@ func NewClient(rawURL string) (*Client, error) {
 		return nil, err
 	}
 
-	return &Client{Conn: conn, key: key, model: model}, nil
+	client := &Client{Conn: conn, key: key, model: model}
+	client.startCommandLoop()
+	return client, nil
 }
 
 type Client struct {
@@ -336,3 +338,16 @@ func dafangVideoStart(video, audio uint8) []byte {
 //func dafangStop() []byte {
 //	return dafangRaw(0xff2404, 0, 0, 5)
 //}
+
+// startCommandLoop continuously drains the CS2 command channel.
+// Some cameras send periodic control/keepalive messages even when media is
+// being read. Leaving these messages unread eventually fills the CS2 buffer.
+func (c *Client) startCommandLoop() {
+	go func() {
+		for {
+			if _, _, err := c.Conn.ReadCommand(); err != nil {
+				return
+			}
+		}
+	}()
+}
